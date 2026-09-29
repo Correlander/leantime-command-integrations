@@ -28,14 +28,9 @@
                 <div class="row">
                     <div class="col-md-3"><label for="apiKey">API key</label></div>
                     <div class="col-md-7">
-                        @if ($settings['apiKeyConfigured'])
-                            <div class="form-control" aria-label="API key is saved" style="margin-bottom: 8px;">••••••••••••••••</div>
-                            <small>The key is saved and masked. Leave the field below blank to keep it, or enter a replacement.</small>
-                        @else
-                            <small>No key is saved. An API key may be optional for local Ollama.</small>
-                        @endif
                         <input class="form-control" type="password" id="apiKey" name="apiKey" maxlength="4096"
-                               autocomplete="new-password" placeholder="{{ $settings['apiKeyConfigured'] ? 'Enter a new key to replace the saved key' : 'Enter API key' }}">
+                               autocomplete="new-password" placeholder="{{ $settings['apiKeyConfigured'] ? 'API key already saved; leave blank to keep it' : 'No API key saved (optional for local Ollama)' }}">
+                        <small>Enter a new value to replace the saved key. The saved value is never sent to the browser.</small>
                     </div>
                 </div>
                 <div class="row">
