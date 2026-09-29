@@ -1,0 +1,17 @@
+{
+  "name": "custom/ai-commands",
+  "description": "AI powered slash commands for the Leantime Tiptap editor.",
+  "version": "0.1.0",
+  "type": "leantime-plugin",
+  "homepage": "https://example.invalid/ai-commands",
+  "authors": [
+    {
+      "name": "Leantime administrator"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Leantime\\Plugins\\AiCommands\\": ""
+    }
+  }
+}

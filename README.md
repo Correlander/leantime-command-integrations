@@ -1,0 +1,21 @@
+# AI Commands
+
+A proof-of-concept Leantime plugin that registers `/ai` in the Tiptap editor and turns the current editor text into a user story through an OpenAI-compatible Chat Completions API. The default target is local Ollama.
+
+## Install
+
+Copy this folder to Leantime's `app/Plugins/AiCommands` directory and enable **AI Commands** from the plugin manager. Once enabled, use its **Settings** link to configure the provider base URL, model, and API key. These values are saved in Leantime's settings store; no Leantime `.env` changes are required.
+
+The base URL is the API base URL (without `/chat/completions`). The key is read server-side and never sent to the browser; leaving its field blank preserves an existing key.
+
+The provider must be reachable from the Leantime PHP runtime. For Docker deployments, `127.0.0.1` refers to the Leantime container itself; use the Ollama service/container hostname as appropriate.
+
+## Files
+
+- `register.php` registers the footer script.
+- `routes.php` adds the authenticated generation endpoint.
+- `Controllers/Ai.php` validates requests and returns JSON.
+- `Controllers/Settings.php` provides the plugin manager's settings page and saves configuration.
+- `Templates/settings.blade.php` contains the editable configuration form.
+- `Services/AiService.php` calls the configurable OpenAI-compatible endpoint.
+- `Assets/js/ai-commands.js` registers the `/ai` slash command.
