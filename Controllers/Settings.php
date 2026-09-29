@@ -45,6 +45,16 @@ class Settings extends Controller
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function post($params)
     {
+        try {
+            return $this->saveSettings($params);
+        } catch (\Throwable $exception) {
+            error_log('[AiCommands] Saving settings failed: '.$exception);
+            throw $exception;
+        }
+    }
+
+    private function saveSettings($params)
+    {
         $validated = request()->validate([
             'baseUrl' => ['required', 'url', 'max:2048'],
             'model' => ['required', 'string', 'max:255'],
