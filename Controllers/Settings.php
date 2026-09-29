@@ -17,6 +17,8 @@ class Settings extends Controller
 
     private SettingService $settings;
 
+    private ?string $settingsError = null;
+
     public function init(SettingService $settings): void
     {
         try {
@@ -30,32 +32,18 @@ class Settings extends Controller
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function get($params)
     {
-        try {
-            $this->tpl->assign('settings', [
-                'baseUrl' => $this->settings->getSetting(self::KEYS['baseUrl'], 'http://127.0.0.1:11434/v1'),
-                'model' => $this->settings->getSetting(self::KEYS['model'], 'llama3.1'),
-                'apiKeyConfigured' => (string) $this->settings->getSetting(self::KEYS['apiKey'], '') !== '',
-            ]);
+        $this->tpl->assign('settings', [
+            'baseUrl' => $this->settings->getSetting(self::KEYS['baseUrl'], 'http://127.0.0.1:11434/v1'),
+            'model' => $this->settings->getSetting(self::KEYS['model'], 'llama3.1'),
+            'apiKeyConfigured' => (string) $this->settings->getSetting(self::KEYS['apiKey'], '') !== '',
+            'error' => $this->settingsError,
+        ]);
 
-            return $this->tpl->display('aicommands.settings');
-        } catch (\Throwable $exception) {
-            error_log('[AiCommands] Settings page failed: '.$exception);
-            throw $exception;
-        }
+        return $this->tpl->display('aicommands.settings');
     }
 
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function post($params)
-    {
-        try {
-            return $this->saveSettings($params);
-        } catch (\Throwable $exception) {
-            error_log('[AiCommands] Saving settings failed: '.$exception);
-            throw $exception;
-        }
-    }
-
-    private function saveSettings($params)
     {
         $validated = request()->validate([
             'baseUrl' => ['required', 'url', 'max:2048'],
@@ -65,7 +53,8 @@ class Settings extends Controller
 
         $baseUrl = rtrim($validated['baseUrl'], '/');
         if (str_contains($baseUrl, '/chat/completions')) {
-            return redirect(BASE_URL.'/AiCommands/settings')->withErrors(['baseUrl' => 'Enter the API base URL without /chat/completions.'])->withInput();
+            $this->settingsError = 'Enter the API base URL without /chat/completions.';
+            return $this->get($params);
         }
 
         $this->settings->saveSetting(self::KEYS['baseUrl'], $baseUrl);

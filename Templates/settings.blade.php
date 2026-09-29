@@ -7,8 +7,8 @@
             @if (session('aiCommandsSaved'))
                 <div class="alert alert-success" role="status">Settings saved.</div>
             @endif
-            @if ($errors->any())
-                <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
+            @if (!empty($settings['error']))
+                <div class="alert alert-danger" role="alert">{{ $settings['error'] }}</div>
             @endif
 
             <form method="post" action="{{ BASE_URL }}/AiCommands/settings">
