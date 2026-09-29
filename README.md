@@ -18,4 +18,5 @@ The provider must be reachable from the Leantime PHP runtime. For Docker deploym
 - `Controllers/Settings.php` provides the plugin manager's settings page and saves configuration.
 - `Templates/settings.blade.php` contains the editable configuration form.
 - `Services/AiService.php` calls the configurable OpenAI-compatible endpoint.
-- `Assets/js/ai-commands.js` registers the `/ai` slash command.
+- `Assets/js/ai-commands.js` is the editable source for the `/ai` slash command.
+- `dist/ai-commands.js` and `dist/mix-manifest.json` are the packaged asset files Leantime's `addFooterJs()` registration reads.

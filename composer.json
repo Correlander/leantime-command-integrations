@@ -1,12 +1,13 @@
 {
-  "name": "custom/ai-commands",
+  "name": "AI Commands",
   "description": "AI powered slash commands for the Leantime Tiptap editor.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "leantime-plugin",
-  "homepage": "https://example.invalid/ai-commands",
+  "homepage": "https://github.com/Correlander/leantime-command-integrations",
   "authors": [
     {
-      "name": "Leantime administrator"
+      "name": "Correlander",
+      "email": ""
     }
   ],
   "autoload": {
