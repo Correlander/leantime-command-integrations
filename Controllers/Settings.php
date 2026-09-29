@@ -4,6 +4,8 @@ namespace Leantime\Plugins\AiCommands\Controllers;
 
 use Leantime\Core\Auth\Permissions\RequiresPermission;
 use Leantime\Core\Controller\Controller;
+use Leantime\Core\Controller\Frontcontroller;
+use Leantime\Core\Exceptions\ValidationException;
 use Leantime\Domain\Plugins\Permissions\PluginsPermissions;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
 
@@ -23,12 +25,7 @@ class Settings extends Controller
 
     public function init(SettingService $settings): void
     {
-        try {
-            $this->settings = $settings;
-        } catch (\Throwable $exception) {
-            error_log('[AiCommands] Settings initialization failed: '.$exception);
-            throw $exception;
-        }
+        $this->settings = $settings;
     }
 
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
@@ -47,48 +44,44 @@ class Settings extends Controller
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function post($params)
     {
-        try {
-            return $this->saveSettings($params);
-        } catch (\Throwable $exception) {
-            error_log('[AiCommands] Saving settings failed: '.$exception);
-            throw $exception;
-        }
+        return $this->saveSettings($params);
     }
 
     private function saveSettings($params)
     {
-        // Leantime 3.10.0 replaces Laravel's translator binding, which makes
-        // Request::validate() fail while resolving Laravel's validator.
-        // Validate these small settings directly rather than using that helper.
-        $request = request();
-        $rawBaseUrl = $request->input('baseUrl');
-        $rawModel = $request->input('model');
-        $rawApiKey = $request->input('apiKey');
+        $input = $this->incomingRequest->only(['baseUrl', 'model', 'apiKey']);
+        $this->formValues = [
+            'baseUrl' => is_string($input['baseUrl'] ?? null) ? trim($input['baseUrl']) : '',
+            'model' => is_string($input['model'] ?? null) ? trim($input['model']) : '',
+        ];
 
-        $baseUrl = is_string($rawBaseUrl) ? rtrim(trim($rawBaseUrl), '/') : '';
-        $model = is_string($rawModel) ? trim($rawModel) : '';
-        $apiKey = is_string($rawApiKey) ? $rawApiKey : '';
-        $this->formValues = ['baseUrl' => $baseUrl, 'model' => $model];
+        try {
+            $validated = ValidationException::validate($input, [
+                'baseUrl' => ['required', 'string', 'url', 'max:2048'],
+                'model' => ['required', 'string', 'max:255'],
+                'apiKey' => ['nullable', 'string', 'max:4096'],
+            ], [
+                'baseUrl.required' => 'Enter an API base URL.',
+                'baseUrl.string' => 'The API base URL must be text.',
+                'baseUrl.url' => 'Enter a valid API base URL.',
+                'baseUrl.max' => 'The API base URL must be 2048 characters or fewer.',
+                'model.required' => 'Enter a model name.',
+                'model.string' => 'The model name must be text.',
+                'model.max' => 'The model name must be 255 characters or fewer.',
+                'apiKey.string' => 'The API key must be text.',
+                'apiKey.max' => 'The API key must be 4096 characters or fewer.',
+            ]);
+        } catch (ValidationException $exception) {
+            $fieldErrors = $exception->getErrorData();
+            $firstFieldErrors = reset($fieldErrors);
+            $this->settingsError = is_array($firstFieldErrors) ? (string) reset($firstFieldErrors) : 'Check the settings and try again.';
 
-        if ($baseUrl === '' || strlen($baseUrl) > 2048 || filter_var($baseUrl, FILTER_VALIDATE_URL) === false) {
-            $this->settingsError = 'Enter a valid API base URL.';
             return $this->get($params);
         }
 
-        if ($model === '' || strlen($model) > 255) {
-            $this->settingsError = 'Enter a model name of 255 characters or fewer.';
-            return $this->get($params);
-        }
-
-        if (! is_string($rawApiKey) && $rawApiKey !== null) {
-            $this->settingsError = 'The API key must be plain text.';
-            return $this->get($params);
-        }
-
-        if (strlen($apiKey) > 4096) {
-            $this->settingsError = 'The API key must be 4096 characters or fewer.';
-            return $this->get($params);
-        }
+        $baseUrl = rtrim(trim($validated['baseUrl']), '/');
+        $model = trim($validated['model']);
+        $apiKey = $validated['apiKey'] ?? '';
 
         if (str_contains($baseUrl, '/chat/completions')) {
             $this->settingsError = 'Enter the API base URL without /chat/completions.';
@@ -102,6 +95,8 @@ class Settings extends Controller
             $this->settings->saveSetting(self::KEYS['apiKey'], $apiKey);
         }
 
-        return redirect(BASE_URL.'/AiCommands/settings')->with('aiCommandsSaved', true);
+        $this->tpl->setNotification('AI Commands settings saved.', 'success');
+
+        return Frontcontroller::redirect(BASE_URL.'/AiCommands/settings');
     }
 }

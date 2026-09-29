@@ -8,18 +8,18 @@ Copy this folder to Leantime's `app/Plugins/AiCommands` directory and enable **A
 
 The base URL is the API base URL (without `/chat/completions`). The key is read server-side and never sent to the browser; leaving its field blank preserves an existing key.
 
-The provider must be reachable from the Leantime PHP runtime. For Docker deployments, `127.0.0.1` refers to the Leantime container itself; use the Ollama service/container hostname as appropriate.
+The provider must be reachable from the Leantime PHP runtime. The default Ollama URL uses `127.0.0.1`, so Ollama must be reachable at that address from the Leantime server.
 
 ## Files
 
-- `register.php` registers the footer script.
+- `register.php` registers the script in Leantime's header through `Registration::addHeaderJs()`. This lets the slash command register before Tiptap editors initialize.
 - `routes.php` adds the authenticated generation endpoint.
-- `Controllers/Ai.php` validates requests and returns JSON.
-- `Controllers/Settings.php` provides the plugin manager's settings page and saves configuration.
+- `Controllers/Ai.php` validates requests with Leantime 3.10.0's `ValidationException::validate()` bridge and returns JSON.
+- `Controllers/Settings.php` provides the plugin manager's settings page and uses Leantime 3.10.0's `ValidationException::validate()` bridge for field validation.
 - `Templates/settings.blade.php` contains the editable configuration form.
 - `Services/AiService.php` calls the configurable OpenAI-compatible endpoint.
 - `Assets/js/ai-commands.js` is the editable source for the `/ai` slash command.
-- `dist/ai-commands.js` and `dist/mix-manifest.json` are the packaged asset files Leantime's `addFooterJs()` registration reads.
+- `dist/ai-commands.js` and `dist/mix-manifest.json` are the packaged asset files Leantime's `addHeaderJs()` registration reads.
 
 ## Plugin folder name
 
