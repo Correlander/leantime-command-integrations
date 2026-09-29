@@ -43,11 +43,11 @@
         return true;
     }
 
-    if (!registerAiCommand()) {
-        let attempts = 0;
-        const timer = window.setInterval(function () {
-            attempts += 1;
-            if (registerAiCommand() || attempts >= 20) window.clearInterval(timer);
-        }, 250);
+    // Load from Leantime's header hook so registration runs before ready callbacks
+    // create rich editors. Leantime builds each editor's slash-command list once.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', registerAiCommand, { once: true });
+    } else {
+        registerAiCommand();
     }
 })();
