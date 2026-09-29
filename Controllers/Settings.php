@@ -19,23 +19,43 @@ class Settings extends Controller
 
     public function init(SettingService $settings): void
     {
-        $this->settings = $settings;
+        try {
+            $this->settings = $settings;
+        } catch (\Throwable $exception) {
+            error_log('[AiCommands] Settings initialization failed: '.$exception);
+            throw $exception;
+        }
     }
 
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function get($params)
     {
-        $this->tpl->assign('settings', [
-            'baseUrl' => $this->settings->getSetting(self::KEYS['baseUrl'], 'http://127.0.0.1:11434/v1'),
-            'model' => $this->settings->getSetting(self::KEYS['model'], 'llama3.1'),
-            'apiKeyConfigured' => (string) $this->settings->getSetting(self::KEYS['apiKey'], '') !== '',
-        ]);
+        try {
+            $this->tpl->assign('settings', [
+                'baseUrl' => $this->settings->getSetting(self::KEYS['baseUrl'], 'http://127.0.0.1:11434/v1'),
+                'model' => $this->settings->getSetting(self::KEYS['model'], 'llama3.1'),
+                'apiKeyConfigured' => (string) $this->settings->getSetting(self::KEYS['apiKey'], '') !== '',
+            ]);
 
-        return $this->tpl->display('aicommands.settings');
+            return $this->tpl->display('aicommands.settings');
+        } catch (\Throwable $exception) {
+            error_log('[AiCommands] Settings page failed: '.$exception);
+            throw $exception;
+        }
     }
 
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function post($params)
+    {
+        try {
+            return $this->saveSettings($params);
+        } catch (\Throwable $exception) {
+            error_log('[AiCommands] Saving settings failed: '.$exception);
+            throw $exception;
+        }
+    }
+
+    private function saveSettings($params)
     {
         $validated = request()->validate([
             'baseUrl' => ['required', 'url', 'max:2048'],
