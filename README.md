@@ -20,3 +20,9 @@ The provider must be reachable from the Leantime PHP runtime. For Docker deploym
 - `Services/AiService.php` calls the configurable OpenAI-compatible endpoint.
 - `Assets/js/ai-commands.js` is the editable source for the `/ai` slash command.
 - `dist/ai-commands.js` and `dist/mix-manifest.json` are the packaged asset files Leantime's `addFooterJs()` registration reads.
+
+## Plugin folder name
+
+Install the plugin files in a folder named exactly `AiCommands` under Leantime's `app/Plugins/` directory. The final path should be `app/Plugins/AiCommands/`. Leantime 3.10.0 derives the plugin lifecycle service and controller namespaces from this folder name, so do not use the repository folder name `Leantime Commands Integrations` for the installed plugin directory.
+
+Slash commands are available in Leantime's complex and notes Tiptap editors. The simple comment editor disables slash commands in Leantime 3.10.0.
