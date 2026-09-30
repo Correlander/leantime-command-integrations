@@ -4,7 +4,7 @@ A proof-of-concept Leantime plugin that registers `/ai` in the Tiptap editor and
 
 ## Install
 
-Copy this folder to Leantime's `app/Plugins/AiCommands` directory and enable **AI Commands** from the plugin manager. Once enabled, use its **Settings** link to configure the provider base URL, model, and API key. These values are saved in Leantime's settings store; no Leantime `.env` changes are required.
+Install and enable **LeantimeLib 0.17.0 or later** first. Then copy this folder to Leantime's `app/Plugins/AiCommands` directory and enable **AI Commands** from the plugin manager. Its settings page uses LeantimeLib's shared renderer; AI Commands owns the values, validation, and persistence. Once enabled, use its **Settings** link to configure the provider base URL, model, and API key. These values are saved in Leantime's settings store; no Leantime `.env` changes are required.
 
 The base URL is the API base URL (without `/chat/completions`). The key is read server-side and never sent to the browser; leaving its field blank preserves an existing key.
 
@@ -16,7 +16,7 @@ The provider must be reachable from the Leantime PHP runtime. The default Ollama
 - `routes.php` adds the authenticated generation endpoint.
 - `Controllers/Ai.php` validates requests with Leantime 3.10.0's `ValidationException::validate()` bridge and returns JSON.
 - `Controllers/Settings.php` provides the plugin manager's settings page and uses Leantime 3.10.0's `ValidationException::validate()` bridge for field validation.
-- `Templates/settings.blade.php` contains the editable configuration form.
+- `Templates/settings.blade.php` supplies the provider form around LeantimeLib's shared settings page.
 - `Services/AiService.php` calls the configurable OpenAI-compatible endpoint.
 - `Assets/js/ai-commands.js` is the editable source for the `/ai` slash command.
 - `dist/ai-commands.js` and `dist/mix-manifest.json` are the packaged asset files Leantime's `addHeaderJs()` registration reads.

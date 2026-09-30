@@ -8,6 +8,9 @@ use Leantime\Core\Controller\Frontcontroller;
 use Leantime\Core\Exceptions\ValidationException;
 use Leantime\Domain\Plugins\Permissions\PluginsPermissions;
 use Leantime\Domain\Setting\Services\Setting as SettingService;
+use Leantime\Plugins\LeantimeLib\Services\SettingsPage;
+use Leantime\Plugins\LeantimeLib\Services\SettingsPageBlock;
+use Leantime\Plugins\LeantimeLib\Services\SettingsPageRenderer;
 
 class Settings extends Controller
 {
@@ -23,6 +26,43 @@ class Settings extends Controller
 
     private array $formValues = [];
 
+    private function renderSettings(): string
+    {
+        if (! class_exists(SettingsPage::class)
+            || ! class_exists(SettingsPageRenderer::class)
+            || SettingsPage::API_VERSION !== 2
+            || SettingsPageRenderer::API_VERSION !== 2) {
+            throw new \RuntimeException('AI Commands requires LeantimeLib 0.17.0 or later for shared settings rendering.');
+        }
+
+        $values = [
+            'baseUrl' => $this->formValues['baseUrl'] ?? $this->settings->getSetting(self::KEYS['baseUrl'], 'http://127.0.0.1:11434/v1'),
+            'model' => $this->formValues['model'] ?? $this->settings->getSetting(self::KEYS['model'], 'llama3.1'),
+            'apiKeyConfigured' => (string) $this->settings->getSetting(self::KEYS['apiKey'], '') !== '',
+        ];
+        $blocks = [];
+        if ($this->settingsError !== null) {
+            $blocks[] = SettingsPageBlock::alert($this->settingsError);
+        }
+
+        $blocks[] = SettingsPageBlock::url('baseUrl', 'OpenAI-compatible API base URL', [
+            'required' => true,
+            'maxlength' => 2048,
+            'help' => 'For Ollama, this is usually http://127.0.0.1:11434/v1. Do not include /chat/completions.',
+        ]);
+        $blocks[] = SettingsPageBlock::text('model', 'Model', ['required' => true, 'maxlength' => 255]);
+        $blocks[] = SettingsPageBlock::secret('apiKey', 'API key', [
+            'maxlength' => 4096,
+            'autocomplete' => 'new-password',
+            'placeholder' => 'No API key saved (optional for local Ollama)',
+            'help' => 'Enter a new value to replace the saved key. The saved value is never sent to the browser.',
+        ]);
+
+        return SettingsPage::forPlugin('AiCommands')
+            ->insert(...$blocks)
+            ->render($values);
+    }
+
     public function init(SettingService $settings): void
     {
         $this->settings = $settings;
@@ -31,13 +71,7 @@ class Settings extends Controller
     #[RequiresPermission(PluginsPermissions::MANAGE, global: true)]
     public function get($params)
     {
-        $this->tpl->assign('settings', [
-            'baseUrl' => $this->formValues['baseUrl'] ?? $this->settings->getSetting(self::KEYS['baseUrl'], 'http://127.0.0.1:11434/v1'),
-            'model' => $this->formValues['model'] ?? $this->settings->getSetting(self::KEYS['model'], 'llama3.1'),
-            'apiKeyConfigured' => (string) $this->settings->getSetting(self::KEYS['apiKey'], '') !== '',
-            'error' => $this->settingsError,
-        ]);
-
+        $this->tpl->assign('settingsContent', $this->renderSettings());
         return $this->tpl->display('aicommands.settings');
     }
 
